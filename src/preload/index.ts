@@ -20,6 +20,31 @@ const api = {
     console.log('data', data, response)
     return await ipcRenderer.invoke(IPC.DATABASE.CONNECT, data)
   },
+
+  async disconnect(): Promise<{ success: boolean; message: string }> {
+    return await ipcRenderer.invoke(IPC.DATABASE.DISCONNECT)
+  },
+
+  async getAllSessions({
+    search,
+    filter,
+  }: {
+    search: string
+    filter: string
+  }): Promise<
+    {
+      sid: string
+      serial: string
+      username: string
+      osuser: string
+      program: string
+    }[]
+  > {
+    return await ipcRenderer.invoke(IPC.MONITOR.GET_ALL_SESSIONS, {
+      search,
+      filter,
+    })
+  },
 }
 if (process.contextIsolated) {
   try {

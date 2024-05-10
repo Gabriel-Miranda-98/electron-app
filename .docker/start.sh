@@ -36,5 +36,6 @@ apt-get remove -y wget unzip
 apt-get autoremove -y
 rm -rf /var/lib/apt/lists/* /var/cache/apt
 export LD_LIBRARY_PATH=/opt/oracle/instantclient_21_4
+echo "export LD_LIBRARY_PATH=/opt/oracle/instantclient_21_4:$LD_LIBRARY_PATH" >> ~/.zshrc
 
 echo "Oracle Instant Client instalado com sucesso em /opt/oracle."

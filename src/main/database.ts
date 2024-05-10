@@ -1,4 +1,4 @@
-import oracledb from 'oracledb'
+import oracledb, { BindParameter } from 'oracledb'
 
 class Database {
   // eslint-disable-next-line no-use-before-define
@@ -44,6 +44,22 @@ class Database {
         console.error('Erro ao fechar a conexão com o banco de dados:', error)
       }
     }
+  }
+
+  public async executeQuery<T>(
+    query: string,
+    binds: { [key: string]: BindParameter },
+  ): Promise<T[]> {
+    if (!this.connection) {
+      throw new Error('Conexão com o banco de dados não estabelecida.')
+    }
+
+    const result = await this.connection.execute<T>(query, binds)
+    if (!result.rows) {
+      return []
+    }
+
+    return result.rows
   }
 }
 
