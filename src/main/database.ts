@@ -26,7 +26,6 @@ class Database {
         password,
         connectString: 'exacc01-scan.pbh:1521/SIRHHM.PBH',
       })
-      console.log('Conectado com sucesso ao Oracle Database')
     } catch (error) {
       console.error('Erro ao conectar ao banco de dados Oracle:', error)
       throw error

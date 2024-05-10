@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import { IPC } from '../shared/constants/ipc'
 import { ElectronAPI, electronAPI } from '@electron-toolkit/preload'
 declare global {
   interface Window {
@@ -12,8 +13,12 @@ type ConnectOracle = {
   password: string
 }
 const api = {
-  connect(data: ConnectOracle) {
-    return ipcRenderer.invoke('login', data)
+  async connect(
+    data: ConnectOracle,
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await ipcRenderer.invoke(IPC.DATABASE.CONNECT, data)
+    console.log('data', data, response)
+    return await ipcRenderer.invoke(IPC.DATABASE.CONNECT, data)
   },
 }
 if (process.contextIsolated) {

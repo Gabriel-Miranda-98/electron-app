@@ -1,0 +1,6 @@
+export const IPC = {
+  DATABASE: {
+    CONNECT: 'DATABASE:CONNECT',
+    DISCONNECT: 'DATABASE:DISCONNECT',
+  },
+}

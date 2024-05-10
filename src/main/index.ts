@@ -2,7 +2,7 @@ import { createFileRoute, createURLRoute } from 'electron-router-dom'
 
 import { app, shell, BrowserWindow } from 'electron'
 import path from 'node:path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import './ipc'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -13,13 +13,14 @@ oracledb.fetchAsString = [oracledb.CLOB]
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
 oracledb.initOracleClient()
 
-function createWindow(): void {
+function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 700,
     show: false,
-    // backgroundColor: '#111827',
+    transparent: true,
     autoHideMenuBar: true,
+    backgroundColor: '#fff',
     ...(process.platform === 'linux'
       ? {
           icon,
@@ -30,7 +31,6 @@ function createWindow(): void {
       sandbox: false,
     },
   })
-
   mainWindow.on('ready-to-show', () => {
     try {
       mainWindow.show()
@@ -43,6 +43,7 @@ function createWindow(): void {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+
   const devServerURL = createURLRoute(
     process.env.ELECTRON_RENDERER_URL!,
     'main',
@@ -53,15 +54,21 @@ function createWindow(): void {
     'main',
   )
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+    console.log('--------------------------------------------')
+    console.log(devServerURL)
+
     mainWindow.loadURL(devServerURL)
   } else {
     mainWindow.loadFile(...fileRoute)
   }
+
+  return mainWindow
 }
 
 if (process.platform === 'darwin') {
   app.dock.setIcon(path.resolve(__dirname, 'icon'))
 }
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
   app.on('browser-window-created', (_, window) => {

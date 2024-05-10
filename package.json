@@ -12,8 +12,9 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "start": "electron-vite preview",
-    "dev": "electron-vite --noSandbox --watch dev",
+    "start": "electron-vite --noSandbox preview",
+    "dev": "electron-vite --noSandbox dev --watch ",
+    "devtools": " electron-vite --noSandbox --inspect --sourcemap dev",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -27,8 +28,10 @@
     "@hookform/resolvers": "^3.3.4",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-toast": "^1.1.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
     "electron-router-dom": "^1.0.5",
     "lucide-react": "^0.378.0",
     "oracledb": "^6.5.0",
@@ -49,6 +52,7 @@
     "autoprefixer": "^10.4.19",
     "electron": "^28.2.0",
     "electron-builder": "^24.9.1",
+    "electron-devtools-installer": "^3.2.0",
     "electron-vite": "^2.0.0",
     "eslint": "^8.57.0",
     "postcss": "^8.4.38",
@@ -56,6 +60,7 @@
     "react-dom": "^18.2.0",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.3.3",
-    "vite": "^5.0.12"
+    "vite": "^5.0.12",
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }

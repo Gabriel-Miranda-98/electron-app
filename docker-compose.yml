@@ -1,17 +1,15 @@
 version: '3.8'
 services:
-
   app:
-    network_mode: host
     build: .
+    devices:
+      - "/dev/dri:/dev/dri"
+    network_mode: host
     command: tail -f /dev/null
     environment:
-      - DISPLAY=${DISPLAY}
+      - DISPLAY=$DISPLAY
     volumes:
       - .:/home/node/app/electron-app
-      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
-      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /tmp/.X11-unix/:/tmp/.X11-unix/
     ports:
-      - 3000:3000
-    
-    
+      - "3000:3001"
