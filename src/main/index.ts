@@ -1,6 +1,6 @@
 import { createFileRoute, createURLRoute } from 'electron-router-dom'
 
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, screen } from 'electron'
 import path from 'node:path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import './ipc'
@@ -13,13 +13,17 @@ oracledb.fetchAsString = [oracledb.CLOB]
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
 oracledb.initOracleClient()
 
-function createWindow() {
+function createWindow(width = 900, height = 700) {
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width,
+    height,
     show: false,
+    center: true,
+    minHeight: 700,
+    minWidth: 900,
+    resizable: true,
     transparent: true,
-    autoHideMenuBar: true,
+    title: 'Oracle Monitor',
     backgroundColor: '#fff',
     ...(process.platform === 'linux'
       ? {
@@ -31,6 +35,8 @@ function createWindow() {
       sandbox: false,
     },
   })
+  mainWindow.setMenuBarVisibility(true)
+  mainWindow.webContents.openDevTools()
   mainWindow.on('ready-to-show', () => {
     try {
       mainWindow.show()
@@ -75,7 +81,9 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  createWindow()
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
+
+  createWindow(width, height)
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

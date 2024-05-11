@@ -61,6 +61,24 @@ class Database {
 
     return result.rows
   }
+
+  public async handleEvents(
+    sql: string,
+    binds: { [key: string]: BindParameter },
+  ): Promise<void> {
+    if (!this.connection) {
+      throw new Error('Conexão com o banco de dados não estabelecida.')
+    }
+
+    await this.connection.subscribe('teste', {
+      callback: (message) => {
+        console.log('Evento recebido:', message)
+      },
+      sql,
+      clientInitiated: true,
+      binds,
+    })
+  }
 }
 
 export default Database

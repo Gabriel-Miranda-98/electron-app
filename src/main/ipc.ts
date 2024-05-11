@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import Database from './database'
 import { IPC } from '../shared/constants/ipc'
 import OracleDB, { BindParameter } from 'oracledb'
@@ -54,7 +54,7 @@ ipcMain.handle(
   ): Promise<GetAllSessionsData[]> => {
     const bind: { [key: string]: BindParameter } = {}
     const db = Database.getInstance()
-    let baseQuery = `SELECT sid "sid", serial# as "serial", username "username", osuser "osuser", program "program" FROM v$session WHERE username IS NOT NULL`
+    let baseQuery = `SELECT sid "sid", serial# as "serial", username "username", osuser "osuser", program "program" FROM v$session WHERE username IS NOT NULL `
 
     if (search) {
       const searchQuery = ` AND (sid LIKE '%' || :search || '%' OR serial# LIKE '%' || :search || '%' OR username LIKE '%' || :search || '%' OR osuser LIKE '%' || :search || '%' OR program LIKE '%' || :search || '%')`
@@ -76,8 +76,72 @@ ipcMain.handle(
         type: OracleDB.STRING,
       }
     }
-
     const result = await db.executeQuery<GetAllSessionsData>(baseQuery, bind)
     return result
   },
 )
+
+interface Command {
+  sql_id: string
+  sql_text: string
+}
+
+interface CommandArgs {
+  sid: string
+  serial: string
+}
+
+ipcMain.handle(
+  IPC.MONITOR.GET_COMMANDS,
+  async (event: IpcMainInvokeEvent, { sid, serial }: CommandArgs) => {
+    const intervalId = setInterval(async () => {
+      const db = Database.getInstance()
+      const baseQuery = `SELECT sql_id "sql_id", sql_text "sql_text" FROM v$sql WHERE sql_id IN (SELECT sql_id FROM v$session WHERE sid = :sid AND serial# = :serial)`
+
+      const bind = {
+        sid: {
+          dir: OracleDB.BIND_IN,
+          val: parseInt(sid),
+          type: OracleDB.NUMBER,
+        },
+        serial: {
+          dir: OracleDB.BIND_IN,
+          val: parseInt(serial),
+          type: OracleDB.NUMBER,
+        },
+      }
+
+      try {
+        const result = await db.executeQuery<Command[]>(baseQuery, bind)
+        console.log('Polling result:', result)
+        event.sender.send(IPC.MONITOR.UPDATED, {
+          sid,
+          serial,
+          commands: result,
+        })
+      } catch (error) {
+        console.error('Error during database polling:', error)
+        event.sender.send(
+          IPC.MONITOR.ERROR,
+          `Erro ao executar rastreamento: ${error}`,
+        )
+      }
+    }, 1000)
+
+    event.sender.send(IPC.MONITOR.STARTED, {
+      message: 'Polling iniciado com sucesso!',
+      eventId: intervalId,
+    })
+
+    console.log('Polling started:', intervalId)
+  },
+)
+
+// Assuming there's an endpoint to stop polling
+ipcMain.on(IPC.MONITOR.STOP_TRACER, (event, eventId) => {
+  clearInterval(eventId)
+  event.sender.send(IPC.MONITOR.STOPPED, {
+    message: 'Polling parado com sucesso!',
+    eventId,
+  })
+})

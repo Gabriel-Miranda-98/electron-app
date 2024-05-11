@@ -1,4 +1,4 @@
-import { Loader2, MoreHorizontal, Search } from 'lucide-react'
+import { Loader2, MoreHorizontal, RefreshCcw, Search } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import {
@@ -24,14 +24,17 @@ import {
   TableRow,
 } from '../components/ui/table'
 import { Badge } from '../components/ui/badge'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Filter } from '../components/Filter'
+import { useNavigate } from 'react-router-dom'
 
 export function Monitor() {
-  const [search, setSearch] = useState('' as string)
-  const [filter, setFilter] = useState('all' as string)
-  const { data, isLoading } = useQuery({
+  const navigate = useNavigate()
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState('all')
+  const queryClient = useQueryClient()
+  const { data, isLoading, isRefetching } = useQuery({
     queryKey: ['sessions', { search, filter }],
     queryFn: async () => {
       const response = await window.api.getAllSessions({ search, filter })
@@ -39,12 +42,19 @@ export function Monitor() {
     },
     initialData: [],
   })
+
   function handleStartTrace(sid: string, serial: string) {
-    console.log('Monitorar sessão: ', sid, serial)
+    navigate('/tracer', { state: { sid, serial } })
+  }
+
+  async function handleRefresh() {
+    await queryClient.invalidateQueries({
+      queryKey: ['sessions'],
+    })
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40 ">
+    <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <div className="relative ml-auto flex-1 md:grow-0">
@@ -58,19 +68,26 @@ export function Monitor() {
             />
           </div>
         </header>
-        <main className=" flex-1 items-start gap-4 sm:px-6 sm:py-0 md:gap-8 ">
+        <main className="flex-1 items-start gap-4 sm:px-6 sm:py-0 md:gap-8">
           <Card className="mt-2">
             <CardHeader className="flex flex-row justify-between">
-              <div>
-                <CardTitle>Sessões</CardTitle>
-                <CardDescription>
-                  Sessões existentes na base de dados
-                </CardDescription>
-              </div>
+              <CardTitle>
+                Sessões
+                <Button
+                  variant="ghost"
+                  className="ml-2"
+                  onClick={handleRefresh}
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+              <CardDescription>
+                Sessões existentes na base de dados
+              </CardDescription>
               <Filter filter={filter} setFilter={setFilter} />
             </CardHeader>
-            <CardContent className="scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar-thin  scrollbar-thumb-stone-800 scrollbar-track-stone-600 md:max-h-[400px] lg:max-h-[600px] overflow-y-auto ">
-              <Table>
+            <CardContent className="relative scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar-thin scrollbar-thumb-stone-800 scrollbar-track-stone-600 md:max-h-[400px] lg:max-h-[600px] overflow-y-auto">
+              <Table className="w-full max-w-5xl mx-auto">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Sid</TableHead>
@@ -89,9 +106,19 @@ export function Monitor() {
                     </TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {isLoading ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
+                  {isLoading || isRefetching ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-2 text-center ">
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Loader2
+                            className="animate-spin"
+                            color="bg-green-500"
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     data.map((session) => (
                       <TableRow key={session.sid}>

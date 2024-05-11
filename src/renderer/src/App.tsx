@@ -5,13 +5,11 @@ import { queryClient } from '~/src/lib/react-query'
 export function App() {
   return (
     <div
-      className={`w-screen h-screen bg-slate-100 flex flex-col  dark:bg-stone-950  `}
+      className={` bg-slate-100   dark:bg-stone-950 flex flex-1 w-screen h-screen flex-col justify-center items-center `}
     >
-      <main className="flex flex-1 flex-col max-h-screen justify-center items-center">
-        <QueryClientProvider client={queryClient}>
-          <AppRoutes />
-        </QueryClientProvider>
-      </main>
+      <QueryClientProvider client={queryClient}>
+        <AppRoutes />
+      </QueryClientProvider>
     </div>
   )
 }
