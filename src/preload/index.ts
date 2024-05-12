@@ -56,15 +56,23 @@ const api = {
     return await ipcRenderer.invoke(IPC.MONITOR.GET_COMMANDS, { sid, serial })
   },
 
-  onCommandUpdate(callback: (data: Command[]) => void): void {
+  onCommandUpdate(
+    callback: (data: {
+      sid: string
+      serial: string
+      commands: Command[]
+    }) => void,
+  ): void {
     ipcRenderer.on(IPC.MONITOR.UPDATED, (event, data) => {
       callback(data)
     })
   },
 
-  async onStart() {
+  onStart(
+    callback: (data: { message: string; eventId: string }) => void,
+  ): void {
     ipcRenderer.on(IPC.MONITOR.STARTED, (event, data) => {
-      console.log('Tracer started:', data)
+      callback(data)
     })
   },
 
@@ -77,9 +85,15 @@ const api = {
   async stopTracer({
     eventId,
   }: {
-    eventId: NodeJS.Timeout
+    eventId: string
   }): Promise<{ success: boolean; message: string }> {
     return await ipcRenderer.invoke(IPC.MONITOR.STOP_TRACER, eventId)
+  },
+
+  removeListeners(): void {
+    ipcRenderer.removeAllListeners(IPC.MONITOR.UPDATED)
+    ipcRenderer.removeAllListeners(IPC.MONITOR.STARTED)
+    ipcRenderer.removeAllListeners(IPC.MONITOR.ERROR)
   },
 }
 

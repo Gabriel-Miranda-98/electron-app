@@ -24,7 +24,7 @@ class Database {
       this.connection = await oracledb.getConnection({
         user,
         password,
-        connectString: 'exacc01-scan.pbh:1521/SIRHHM.PBH',
+        connectString: 'vlpd-ora02.pbh:1521/DSV004',
       })
     } catch (error) {
       console.error('Erro ao conectar ao banco de dados Oracle:', error)
@@ -39,7 +39,6 @@ class Database {
       try {
         await this.connection.close()
         this.connection = null
-        console.log('Conexão com o banco de dados fechada com sucesso.')
       } catch (error) {
         console.error('Erro ao fechar a conexão com o banco de dados:', error)
       }
@@ -71,9 +70,7 @@ class Database {
     }
 
     await this.connection.subscribe('teste', {
-      callback: (message) => {
-        console.log('Evento recebido:', message)
-      },
+      callback: () => {},
       sql,
       clientInitiated: true,
       binds,

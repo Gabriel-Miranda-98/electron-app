@@ -2,6 +2,7 @@ import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import Database from './database'
 import { IPC } from '../shared/constants/ipc'
 import OracleDB, { BindParameter } from 'oracledb'
+const intervalMap = new Map()
 
 ipcMain.handle(
   IPC.DATABASE.CONNECT,
@@ -54,7 +55,7 @@ ipcMain.handle(
   ): Promise<GetAllSessionsData[]> => {
     const bind: { [key: string]: BindParameter } = {}
     const db = Database.getInstance()
-    let baseQuery = `SELECT sid "sid", serial# as "serial", username "username", osuser "osuser", program "program" FROM v$session WHERE username IS NOT NULL `
+    let baseQuery = `SELECT sid "sid", serial# as "serial", username "username", osuser "osuser", program "program" FROM v$session  WHERE TYPE = 'USER'`
 
     if (search) {
       const searchQuery = ` AND (sid LIKE '%' || :search || '%' OR serial# LIKE '%' || :search || '%' OR username LIKE '%' || :search || '%' OR osuser LIKE '%' || :search || '%' OR program LIKE '%' || :search || '%')`
@@ -113,7 +114,7 @@ ipcMain.handle(
 
       try {
         const result = await db.executeQuery<Command[]>(baseQuery, bind)
-        console.log('Polling result:', result)
+
         event.sender.send(IPC.MONITOR.UPDATED, {
           sid,
           serial,
@@ -126,22 +127,22 @@ ipcMain.handle(
           `Erro ao executar rastreamento: ${error}`,
         )
       }
-    }, 1000)
+    }, 500)
+    const key = `${sid}-${serial}-${Date.now()}`
+    intervalMap.set(key, intervalId)
 
     event.sender.send(IPC.MONITOR.STARTED, {
-      message: 'Polling iniciado com sucesso!',
-      eventId: intervalId,
+      message: 'Tracer iniciado com sucesso!',
+      eventId: key,
     })
-
-    console.log('Polling started:', intervalId)
   },
 )
 
-// Assuming there's an endpoint to stop polling
-ipcMain.on(IPC.MONITOR.STOP_TRACER, (event, eventId) => {
-  clearInterval(eventId)
-  event.sender.send(IPC.MONITOR.STOPPED, {
-    message: 'Polling parado com sucesso!',
-    eventId,
-  })
+ipcMain.handle(IPC.MONITOR.STOP_TRACER, (event, key) => {
+  if (intervalMap.has(key)) {
+    clearInterval(intervalMap.get(key))
+    intervalMap.delete(key)
+
+    return { success: true, message: 'Tracer Cancelado!' }
+  }
 })

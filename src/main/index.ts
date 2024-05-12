@@ -60,9 +60,6 @@ function createWindow(width = 900, height = 700) {
     'main',
   )
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
-    console.log('--------------------------------------------')
-    console.log(devServerURL)
-
     mainWindow.loadURL(devServerURL)
   } else {
     mainWindow.loadFile(...fileRoute)

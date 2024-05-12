@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from '../components/ui/use-toast'
 import {
   Card,
@@ -25,27 +25,61 @@ interface LocationState {
 }
 
 export function Tracer() {
-  const [eventId, setEventId] = useState<NodeJS.Timeout | null>(null)
+  const queryClient = useQueryClient()
+  const [eventId, setEventId] = useState<string | null>(null)
   const location = useLocation()
+  const navigation = useNavigate()
   const { sid, serial } = location.state as LocationState
 
   useEffect(() => {
-    window.api.onError((message) => {
+    const handleCommandsUpdate = ({
+      commands,
+    }: {
+      sid: string
+      serial: string
+      commands: Command[]
+    }) => {
+      queryClient.setQueryData<Command[]>(
+        ['commands', { sid, serial }],
+        (oldCommands) => {
+          const updatedCommands = oldCommands ? [...oldCommands] : []
+
+          commands.forEach((command) => {
+            if (!updatedCommands.some((c) => c.sql_id === command.sql_id)) {
+              updatedCommands.push(command)
+            }
+          })
+          return updatedCommands
+        },
+      )
+    }
+
+    const handleStart = (data: { eventId: string; message: string }) => {
+      setEventId(data.eventId)
+      toast({
+        title: 'Tracer Iniciado',
+        description: data.message,
+        className: 'bg-green-600 text-white',
+      })
+    }
+
+    const handleError = (error: string) => {
       toast({
         title: 'Erro',
-        description: message,
+        description: error,
         className: 'bg-red-600 text-white',
       })
-    })
-    window.api.onStart()
-    // return () => {
-    //   if (eventId) {
-    //     window.api.stopTracer({ eventId })
-    //   }
-    // }
-  }, [])
+    }
 
-  const { data, refetch } = useQuery<Command[]>({
+    window.api.onError(handleError)
+    window.api.onStart(handleStart)
+    window.api.onCommandUpdate(handleCommandsUpdate)
+    return () => {
+      window.api.removeListeners()
+    }
+  }, [queryClient, sid, serial])
+
+  const { data } = useQuery<Command[]>({
     queryKey: ['commands', { sid, serial }],
     queryFn: async () => {
       await window.api.getCommands({ sid, serial })
@@ -64,11 +98,15 @@ export function Tracer() {
         title: 'Tracer Parado',
         description: response.message,
         className: 'bg-red-600 text-white',
+        duration: 5000,
       })
-      refetch()
     }
   }
 
+  function handleNavigationBack() {
+    handleStopTrace()
+    navigation('/monitor')
+  }
   return (
     <Card className="w-full rounded-none h-screen">
       <CardHeader>
@@ -83,13 +121,21 @@ export function Tracer() {
       <CardContent>
         <ScrollArea className="w-full rounded-md border p-4 shadow-current md:h-96 lg:h-[700px]">
           <ScrollBar orientation="vertical" />
-          {data &&
-            data.map((command, index) => (
-              <div key={index}>{command.sql_text}</div>
-            ))}
+          <div className="divide-y">
+            {data.map((command) => {
+              return (
+                <p key={command.sql_id} className="text-sm mt-2 py-2">
+                  {command.sql_text}
+                </p>
+              )
+            })}
+          </div>
         </ScrollArea>
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className="flex justify-between">
+        <Button variant="default" onClick={handleNavigationBack}>
+          voltar
+        </Button>
         <Button
           variant="destructive"
           onClick={handleStopTrace}
