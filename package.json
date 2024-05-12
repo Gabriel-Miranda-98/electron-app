@@ -1,7 +1,7 @@
 {
   "name": "trace",
   "productName": "Trace Oracle",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Aplicativo para monitoramento de transações Oracle",
   "main": "./out/main/index.js",
   "author": "example.com",
