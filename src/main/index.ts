@@ -11,7 +11,6 @@ import Database from './database'
 import oracledb from 'oracledb'
 oracledb.fetchAsString = [oracledb.CLOB]
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
-oracledb.initOracleClient()
 
 function createWindow(width = 900, height = 700) {
   const mainWindow = new BrowserWindow({

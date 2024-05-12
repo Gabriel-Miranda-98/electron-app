@@ -21,11 +21,13 @@ class Database {
     }
 
     try {
-      this.connection = await oracledb.getConnection({
+      const pool = await oracledb.createPool({
         user,
         password,
         connectString: 'vlpd-ora02.pbh:1521/DSV004',
+        poolAlias: 'default',
       })
+      this.connection = await pool.getConnection()
     } catch (error) {
       console.error('Erro ao conectar ao banco de dados Oracle:', error)
       throw error
@@ -54,6 +56,7 @@ class Database {
     }
 
     const result = await this.connection.execute<T>(query, binds)
+    console.log(result)
     if (!result.rows) {
       return []
     }
