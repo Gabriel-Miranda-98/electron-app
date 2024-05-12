@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: electron-app
+appId: com.pbh.tracer-app
+productName: Tracer-app
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: electron-app
+  executableName: tracer-app
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -30,14 +30,14 @@ dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
   target:
-    - AppImage
-    - snap
+    # - AppImage
     - deb
+    # - rpm
+    # - pacman
+    # - freebsd
   maintainer: electronjs.org
   category: Utility
+  synopsis: Tracer app oracle
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
